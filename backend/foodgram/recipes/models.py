@@ -1,5 +1,8 @@
-from colorfield.filds import ColorField
+from colorfield.fields import ColorField
+from django.core.validators import MinValueValidator
 from django.db import models
+
+from ..users.models import User
 
 
 class Tags(models.Model):
@@ -38,11 +41,15 @@ class Recipes(models.Model):
         related_name='recipes'
     )
     pub_date = models.DateField('Дата публикации', auto_now_add=True)
-    image = models.ImageField()
+    image = models.ImageField(
+        upload_to='recipes/images'
+    )
     name = models.CharField(max_length=200)
     text = models.CharField(max_length=500)
     cooking_time = models.PositiveSmallIntegerField(
-        # validator
+        validators=[
+            MinValueValidator(1, 'Минимальное время 1 минута')
+        ]
     )
     author = models.ForeignKey(
         User,
@@ -67,5 +74,7 @@ class RecipeIngredients(models.Model):
     )
     quantity = models.IntegerField(
         default=1,
-        # validator
+        validators=[
+            MinValueValidator(1, 'Минимальное количество 1')
+        ]
     )

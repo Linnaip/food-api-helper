@@ -37,6 +37,9 @@ class User(AbstractUser):
         default=USER
     )
 
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
     @property
     def is_admin(self):
         return self.role == self.ADMIN
@@ -46,3 +49,25 @@ class User(AbstractUser):
             models.UniqueConstraint(fields=['username', 'email'],
                                     name='uniq_signup')
         )
+
+
+class Follow(models.Model):
+    """
+    Модель подписки.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following'
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'author'],
+                                    name='unique_following')
+        ]
