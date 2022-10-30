@@ -10,7 +10,7 @@ class User(AbstractUser):
     USER = 'user'
     ROLES = [
         (ADMIN, 'Administrator'),
-        (USER, 'User'),
+        (USER, 'USER'),
     ]
     username = models.CharField(
         max_length=150,
@@ -45,10 +45,7 @@ class User(AbstractUser):
         return self.role == self.ADMIN
 
     class Meta:
-        constraints = (
-            models.UniqueConstraint(fields=['username', 'email'],
-                                    name='uniq_signup')
-        )
+        ordering = ('id',)
 
 
 class Follow(models.Model):
@@ -67,7 +64,9 @@ class Follow(models.Model):
     )
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'author'],
-                                    name='unique_following')
-        ]
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'author'),
+                name='unique_follow',
+            ),
+        )

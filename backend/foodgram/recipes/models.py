@@ -1,8 +1,9 @@
 from colorfield.fields import ColorField
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.contrib.auth import get_user_model
 
-from ..users.models import User
+User = get_user_model()
 
 
 class Tags(models.Model):
@@ -35,7 +36,7 @@ class Recipes(models.Model):
         through='RecipeIngredients',
         related_name='recipes'
     )
-    tags = models.ForeignKey(
+    tag = models.ForeignKey(
         Tags,
         on_delete=models.CASCADE,
         related_name='recipes'
@@ -78,3 +79,5 @@ class RecipeIngredients(models.Model):
             MinValueValidator(1, 'Минимальное количество 1')
         ]
     )
+    # Favorite
+    # Shopping_card
