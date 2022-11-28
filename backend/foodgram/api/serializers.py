@@ -68,3 +68,16 @@ class RecipesSerializer(serializers.ModelSerializer):
         if request.user.is_anonymous:
             return False
         return ShoppingCart.objects.filter(user=request.user, recipe__id=obj.id).exists()
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Follow
+        fields = '__all__'
+
+    def validate_following(self, following):
+        if self.context.get('request').user == following:
+            raise serializers.ValidationError(
+                'You cant follow to yourself.'
+            )
+        return following
