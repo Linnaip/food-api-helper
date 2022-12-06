@@ -29,12 +29,10 @@ class Ingredients(models.Model):
     )
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['name', 'measure_unit'],
-                name='ingredient_name_unit_unique'
-            )
-        ]
+        ordering = ['id']
+
+    def __str__(self):
+        return self.name
 
 
 class Recipes(models.Model):
