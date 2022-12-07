@@ -1,52 +1,64 @@
-from django.db.models import F, Sum
-from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
+from djoser.views import UserViewSet
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from djoser.views import UserViewSet
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from weasyprint import HTML
 
-from .serializers import TagSerializer, IngredientsSerializer, RecipesSerializer, UsersSerializer, FollowSerializer,\
-    FavoriteSerializer, CreateRecipesSerializer, ShoppingCartSerializer
-from recipes.models import Tags, Ingredients, Recipes, Favorite, ShoppingCart, RecipeIngredients
 from users.models import User, Follow
+from recipes.models import Tags, Ingredients, Recipes, Favorite, ShoppingCart
+from .permissions import IsAdminOrReadOnly, IsAdminAuthorOrReadOnly
+from .serializers import TagSerializer, IngredientsSerializer, RecipesSerializer, UsersSerializer, FollowSerializer, \
+    FavoriteSerializer, CreateRecipesSerializer, ShoppingCartSerializer, InfoFollowSerializer
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tags.objects.all()
     serializer_class = TagSerializer
+    pagination_class = None
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredients.objects.all()
     serializer_class = IngredientsSerializer
+    pagination_class = None
+    permission_classes = (IsAdminOrReadOnly,)
+    # filter_backends
 
 
 class CustomUserViewSet(UserViewSet):
     queryset = User.objects.all()
     serializer_class = UsersSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     @action(['get'], detail=False)
     def subscriptions(self, request):
-        follow = Follow.objects.filter(user=request.user)
-        serializer = FollowSerializer(follow, many=True)
-        return Response(serializer.data)
+        user_obj = User.objects.filter(following__user=request.user)
+        paginator = PageNumberPagination()
+        result_page = paginator.paginate_queryset(user_obj, request)
+        serializer = InfoFollowSerializer(
+            result_page, many=True, context={"current_user": request.user}
+        )
+        return paginator.get_paginated_response(serializer.data)
 
     @action(['POST', 'DELETE'], detail=True)
     def subscribe(self, request, pk):
+        author = get_object_or_404(User, id=pk)
         subscription = get_object_or_404(
             Follow,
-            author=get_object_or_404(User, id=pk),
-            user=request.user
+            author=author,
+            user=request.user.pk
         )
+        data = {'user': request.user.pk, 'author': pk}
         if request.method == 'POST':
             serializer = FollowSerializer(
-                data=request.data
+                data=data,
+                author=author
             )
             if serializer.is_valid():
-                serializer.save()
+                serializer.save(user=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         elif request.method == 'DELETE':
@@ -60,6 +72,8 @@ class RecipesViewSet(viewsets.ModelViewSet):
     """
     queryset = Recipes.objects.all()
     serializer_class = RecipesSerializer
+    permission_classes = (IsAdminAuthorOrReadOnly,)
+    #  filter_backend
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':
@@ -111,24 +125,3 @@ class RecipesViewSet(viewsets.ModelViewSet):
         elif request.method == 'DELETE':
             shopping_cart.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def download_shopping_cart(self, request):
-        """
-        Вью для скачивания списка.
-        """
-        shopping_list = RecipeIngredients.objects.filter(
-            recipe__cart__user=request.user
-        ).values(
-            name=F('ingredient__name'),
-            measurement_unit=F('ingredients__measurement_unit')
-        ).annotate(amount=Sum('amount')).values_list(
-            'ingredients__name', 'quantity', 'ingredients__measurement_unit'
-        )
-        html_template = render_to_string('recipes/pdf_template.html',
-                                         {'ingredients': shopping_list})
-        html = HTML(string=html_template)
-        result = html.write_pdf()
-        response = HttpResponse(result, content_type='application/pdf;')
-        response['Content-Disposition'] = 'inline; filename=shopping_list.pdf'
-        response['Content-Transfer-Encoding'] = 'binary'
-        return response

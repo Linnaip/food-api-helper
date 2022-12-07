@@ -1,13 +1,42 @@
+from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-
+from djoser.serializers import UserCreateSerializer, UserSerializer
 
 from recipes.models import Tags, Ingredients, Recipes, Favorite, ShoppingCart, RecipeIngredients
 from users.models import User, Follow
 
 
-class UsersSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+class CreateUsersSerializer(UserCreateSerializer):
+    """
+    Для создания юзера.
+    """
+    class Meta:
+        model = User
+        fields = (
+            'id', 'email',
+            'username', 'first_name', 'last_name',
+            'password'
+        )
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        user = User.objects.create(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name']
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
+
+
+class UsersSerializer(UserSerializer):
+    """
+    Отображает пользователя.
+    """
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -186,7 +215,40 @@ class RecipesSerializer(serializers.ModelSerializer):
         return ShoppingCart.objects.filter(user=request.user, recipe__id=obj.id).exists()
 
 
-class FollowSerializer(serializers.ModelSerializer):
+class InfoFollowSerializer(UserSerializer):
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            "email",
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "is_subscribed",
+            "recipes",
+            "recipes_count",
+        )
+
+    def get_recipes(self, obj):
+        recipes = obj.recipes.all()[:6]
+        result = ShortInfoRecipesSerializer(recipes,many=True).data
+        return result
+
+    def get_recipes_count(self, obj):
+        recipes = Recipes.objects.filter(author=obj)
+        return recipes.count()
+
+
+class FollowSerializer(UserSerializer):
+    """
+    Подписки.
+    """
+    user = serializers.IntegerField(source='user.id')
+    author = serializers.IntegerField(source='author.id')
+
     class Meta:
         model = Follow
         fields = '__all__'
@@ -197,6 +259,13 @@ class FollowSerializer(serializers.ModelSerializer):
                 'You cant follow to yourself.'
             )
         return following
+
+    def create(self, validated_data):
+        author = validated_data.get('author')
+        author = get_object_or_404(User, pk=author.get('id'))
+        user = validated_data.get('user')
+        result = Follow.objects.create(user=user, author=author)
+        return result
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
