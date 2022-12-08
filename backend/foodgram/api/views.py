@@ -35,33 +35,35 @@ class CustomUserViewSet(UserViewSet):
 
     @action(['get'], detail=False)
     def subscriptions(self, request):
-        user_obj = User.objects.filter(following__user=request.user)
-        paginator = PageNumberPagination()
-        result_page = paginator.paginate_queryset(user_obj, request)
-        serializer = InfoFollowSerializer(
-            result_page, many=True, context={"current_user": request.user}
+        subscriptions_list = self.paginate_queryset(
+            User.objects.filter(following__user=request.user)
         )
-        return paginator.get_paginated_response(serializer.data)
+        serializer = InfoFollowSerializer(
+            subscriptions_list, many=True, context={
+                'request': request
+            }
+        )
+        return self.get_paginated_response(serializer.data)
 
     @action(['POST', 'DELETE'], detail=True)
-    def subscribe(self, request, pk):
-        author = get_object_or_404(User, id=pk)
-        subscription = get_object_or_404(
-            Follow,
-            author=author,
-            user=request.user.pk
-        )
-        data = {'user': request.user.pk, 'author': pk}
+    def subscribe(self, request, id):
+        author = get_object_or_404(User, id=id)
+        data = {'user': request.user.pk, 'author': id}
         if request.method == 'POST':
             serializer = FollowSerializer(
                 data=data,
-                author=author
+                context={'request': request}
             )
             if serializer.is_valid():
                 serializer.save(user=request.user)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         elif request.method == 'DELETE':
+            subscription = get_object_or_404(
+                Follow,
+                author=author,
+                user=request.user.id
+            )
             subscription.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -83,11 +85,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(['POST', 'DELETE'], detail=True)
     def favorite(self, request, pk):
         recipe = get_object_or_404(Recipes, id=pk)
-        favorite = get_object_or_404(
-            Favorite,
-            user=request.user,
-            recipe=recipe
-        )
         data = {'user': request.user.id, 'recipe': pk}
         context = {'request': request}
         if request.method == 'POST':
@@ -100,17 +97,17 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         elif request.method == 'DELETE':
+            favorite = get_object_or_404(
+                Favorite,
+                user=request.user,
+                recipe=recipe
+            )
             favorite.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(['POST', 'DELETE'], detail=True)
     def shopping_cart(self, request, pk):
         recipe = get_object_or_404(Recipes, id=pk)
-        shopping_cart = get_object_or_404(
-            ShoppingCart,
-            user=request.user,
-            recipe=recipe
-        )
         data = {'user': request.user.id, 'recipe': pk}
         context = {'request': request}
         if request.method == 'POST':
@@ -123,5 +120,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         elif request.method == 'DELETE':
+            shopping_cart = get_object_or_404(
+                ShoppingCart,
+                user=request.user,
+                recipe=recipe
+            )
             shopping_cart.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)

@@ -218,6 +218,7 @@ class RecipesSerializer(serializers.ModelSerializer):
 class InfoFollowSerializer(UserSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -234,12 +235,15 @@ class InfoFollowSerializer(UserSerializer):
 
     def get_recipes(self, obj):
         recipes = obj.recipes.all()[:6]
-        result = ShortInfoRecipesSerializer(recipes,many=True).data
+        result = ShortInfoRecipesSerializer(recipes, many=True).data
         return result
 
     def get_recipes_count(self, obj):
         recipes = Recipes.objects.filter(author=obj)
         return recipes.count()
+
+    def get_is_subscribed(self, obj):
+        return Follow.objects.filter(user=self.context.get('request').user, author=obj).exists()
 
 
 class FollowSerializer(UserSerializer):
@@ -261,11 +265,16 @@ class FollowSerializer(UserSerializer):
         return following
 
     def create(self, validated_data):
-        author = validated_data.get('author')
-        author = get_object_or_404(User, pk=author.get('id'))
-        user = validated_data.get('user')
-        result = Follow.objects.create(user=user, author=author)
-        return result
+        author = validated_data.get("author")
+        author = get_object_or_404(User, pk=author.get("id"))
+        user = validated_data.get("user")
+        return Follow.objects.create(user=user, author=author)
+
+    def to_representation(self, instance):
+        return InfoFollowSerializer(
+            instance.author,
+            context={'request': self.context.get('request')}
+        ).data
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
@@ -285,6 +294,11 @@ class FavoriteSerializer(serializers.ModelSerializer):
             )
         return data
 
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return ShortInfoRecipesSerializer(instance.recipe, context=context).data
+
 
 class ShoppingCartSerializer(serializers.ModelSerializer):
     """
@@ -295,7 +309,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
         model = ShoppingCart
 
     def to_representation(self, instance):
-        request=self.context.get('request')
+        request = self.context.get('request')
         context = {'request': request}
-        result = RecipesSerializer(instance.recipe, context=context).data
+        result = ShortInfoRecipesSerializer(instance.recipe, context=context).data
         return result
