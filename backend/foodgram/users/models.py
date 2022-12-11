@@ -16,25 +16,30 @@ class User(AbstractUser):
         max_length=150,
         null=False,
         blank=False,
-        unique=True
+        unique=True,
+        verbose_name='Никнейм'
     )
     first_name = models.CharField(
-        max_length=200
+        max_length=200,
+        verbose_name='Имя'
     )
     last_name = models.CharField(
-        max_length=200
+        max_length=200,
+        verbose_name='Фамилия'
     )
     email = models.EmailField(
         max_length=255,
         blank=False,
         null=False,
-        unique=True
+        unique=True,
+        verbose_name='Почта'
     )
     role = models.CharField(
         max_length=50,
         null=True,
         choices=ROLES,
-        default=USER
+        default=USER,
+        verbose_name='Пользовательская роль'
     )
 
     USERNAME_FIELD = 'email'
@@ -46,6 +51,8 @@ class User(AbstractUser):
 
     class Meta:
         ordering = ('id',)
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
 
 
 class Follow(models.Model):
@@ -55,15 +62,19 @@ class Follow(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='follower'
+        related_name='follower',
+        verbose_name='Подписчик'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='following'
+        related_name='following',
+        verbose_name='Автор'
     )
 
     class Meta:
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
         constraints = (
             models.UniqueConstraint(
                 fields=('user', 'author'),
