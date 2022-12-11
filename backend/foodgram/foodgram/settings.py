@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'recipes.apps.RecipesConfig',
     'api.apps.ApiConfig',
     'rest_framework',
+    'rest_framework.authtoken',
     'djoser',
     'colorfield',
     'django_filters',
@@ -50,7 +51,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'foodgram.urls'
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -111,9 +111,7 @@ AUTH_USER_MODEL = 'users.User'
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.TokenAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
+        'rest_framework.authentication.TokenAuthentication',
     ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.AllowAny",
@@ -136,7 +134,7 @@ DJOSER = {
     },
     "PERMISSIONS": {
         "user": ["rest_framework.permissions.AllowAny"],
-        "user_list": ["rest_framework.permissions.AllowAny"],
+        "user_list": ["rest_framework.permissions.IsAuthenticated"],
     },
 }
 

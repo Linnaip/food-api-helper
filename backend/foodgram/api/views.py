@@ -1,13 +1,16 @@
+from bs4.builder import HTML
+from django.db.models import F, Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from djoser.views import UserViewSet
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 from users.models import User, Follow
-from recipes.models import Tags, Ingredients, Recipes, Favorite, ShoppingCart
+from recipes.models import Tags, Ingredients, Recipes, Favorite, ShoppingCart, RecipeIngredients
 from .permissions import IsAdminOrReadOnly, IsAdminAuthorOrReadOnly
 from .serializers import TagSerializer, IngredientsSerializer, RecipesSerializer, UsersSerializer, FollowSerializer, \
     FavoriteSerializer, CreateRecipesSerializer, ShoppingCartSerializer, InfoFollowSerializer
@@ -127,3 +130,27 @@ class RecipesViewSet(viewsets.ModelViewSet):
             )
             shopping_cart.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(['GET'], detail=False)
+    def download_shopping_cart(self, request):
+        shopping_cart = []
+        cart = (
+            RecipeIngredients.objects.filter(
+                recipe__shoppingcart__user=request.user.id
+            ).values(
+                "ingredients__name",
+                "ingredients__measure_unit",
+            ).annotate(total_quantity=Sum("quantity"))
+        )
+        for item in cart:
+            name = item["ingredients__name"]
+            measurement_unit = item["ingredients__measure_unit"]
+            quantity = item["quantity"]
+            shopping_cart.append(f"{name}: {quantity} {measurement_unit}")
+        content = "\n".join(shopping_cart)
+        content_type = "text/plain,charset=utf8"
+        response = HttpResponse(content, content_type=content_type)
+        response[
+            "Content-Disposition"
+        ] = f"attachment; filename={'shopping_list.txt'}"
+        return response

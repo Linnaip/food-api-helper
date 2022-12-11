@@ -108,7 +108,8 @@ class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
     Для создания ингредиетов.
     """
     id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredients.objects.all()
+        queryset=Ingredients.objects.all(),
+        source='ingredients'
     )
 
     class Meta:
@@ -169,6 +170,14 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         self.create_ingredients(ingredients_data, recipe)
         return recipe
 
+    def update(self, recipe, validated_data):
+        ingredients = validated_data.pop("ingredients")
+        tags = validated_data.pop("tag")
+        RecipeIngredients.objects.filter(recipe=recipe).delete()
+        self.create_ingredients(ingredients, recipe)
+        recipe.tags.set(tags)
+        return super().update(recipe, validated_data)
+
     def to_representation(self, instance):
         rep_data = self.context.get('request')
         result = RecipesSerializer(instance,
@@ -181,7 +190,8 @@ class RecipesSerializer(serializers.ModelSerializer):
     Для просмотра полной информации о рецептах.
     """
     tag = TagSerializer(read_only=True, many=True)
-    ingredients = IngredientsSerializer(read_only=True, many=True)
+    ingredients = IngredientsSerializer(read_only=True, many=True,
+                                        source='ingredients_recipe')
     author = UsersSerializer(read_only=True)
     is_favorite = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
@@ -216,9 +226,12 @@ class RecipesSerializer(serializers.ModelSerializer):
 
 
 class InfoFollowSerializer(UserSerializer):
+    """
+    Для вывода информации о подписках.
+    """
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
-    is_subscribed = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
