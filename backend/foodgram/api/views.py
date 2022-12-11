@@ -88,13 +88,13 @@ class RecipesViewSet(viewsets.ModelViewSet):
             return RecipesSerializer
         return CreateRecipesSerializer
 
-    @action(['POST', 'DELETE'], detail=True)
-    def favorite(self, request, pk):
+    @staticmethod
+    def repeat_method(request, model, serializer_name, pk):
         recipe = get_object_or_404(Recipe, id=pk)
         data = {'user': request.user.id, 'recipe': pk}
         context = {'request': request}
         if request.method == 'POST':
-            serializer = FavoriteSerializer(
+            serializer = serializer_name(
                 data=data,
                 context=context
             )
@@ -104,37 +104,31 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 serializer.data, status=status.HTTP_201_CREATED
             )
         elif request.method == 'DELETE':
-            favorite = get_object_or_404(
-                Favorite,
+            model_object = get_object_or_404(
+                model,
                 user=request.user,
                 recipe=recipe
             )
-            favorite.delete()
+            model_object.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(['POST', 'DELETE'], detail=True)
+    def favorite(self, request, pk):
+        return self.repeat_method(
+            request=request,
+            model=Favorite,
+            serializer_name=FavoriteSerializer,
+            pk=pk
+        )
+
+    @action(['POST', 'DELETE'], detail=True)
     def shopping_cart(self, request, pk):
-        recipe = get_object_or_404(Recipe, id=pk)
-        data = {'user': request.user.id, 'recipe': pk}
-        context = {'request': request}
-        if request.method == 'POST':
-            serializer = ShoppingCartSerializer(
-                data=data,
-                context=context
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response(
-                serializer.data, status=status.HTTP_201_CREATED
-            )
-        elif request.method == 'DELETE':
-            shopping_cart = get_object_or_404(
-                ShoppingCart,
-                user=request.user,
-                recipe=recipe
-            )
-            shopping_cart.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        return self.repeat_method(
+            request=request,
+            model=ShoppingCart,
+            serializer_name=ShoppingCartSerializer,
+            pk=pk
+        )
 
     @action(['GET'], detail=False)
     def download_shopping_cart(self, request):

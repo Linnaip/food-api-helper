@@ -165,8 +165,8 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         return data
 
     def create_ingredients(self, ingredients, recipe):
-        RecipeIngredients.objects.bult_create(
-            RecipeIngredients.objects.create(
+        RecipeIngredient.objects.bult_create(
+            RecipeIngredient.objects.create(
                 recipe=recipe,
                 ingredient_id=ingredient.get('id'),
                 quantity=ingredient.get('quantity'),
@@ -178,7 +178,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients')
         tag_data = validated_data.pop('tag')
         image_data = validated_data.pop('image')
-        recipe = Recipes.objects.create(
+        recipe = Recipe.objects.create(
             **validated_data,
             image=image_data,
             author=author_data
@@ -190,7 +190,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
     def update(self, recipe, validated_data):
         ingredients = validated_data.pop("ingredients")
         tags = validated_data.pop("tag")
-        RecipeIngredients.objects.filter(recipe=recipe).delete()
+        RecipeIngredient.objects.filter(recipe=recipe).delete()
         self.create_ingredients(ingredients, recipe)
         recipe.tags.set(tags)
         return super().update(recipe, validated_data)
@@ -281,7 +281,7 @@ class InfoFollowSerializer(UserSerializer):
         return result
 
     def get_recipes_count(self, obj):
-        recipes = Recipes.objects.filter(author=obj)
+        recipes = Recipe.objects.filter(author=obj)
         return recipes.count()
 
     def get_is_subscribed(self, obj):
