@@ -1,17 +1,50 @@
 version: '3.3'
 services:
+  db: База данных посгрес
+    image:  Образ который будет использован
+    volumes: Путь к файлу базы данных
+      -
+    env_file: Путь к env файлу
+      -
+
+  backend: Часть для файлов бека
+    image: Образ для бека
+    restart: always
+    volumes:
+      - static_value:/app/static/
+      - media_value:/app/media/
+    depends_on:
+      - db
+    env_file:
+      - путь к env файлу
+
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: ОБраз для фронта
+
     volumes:
       - ../frontend/:/app/result_build/
+    depends_on:
+      - backend
+
+
+
   nginx:
     image: nginx:1.19.3
+    restart: always
     ports:
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
+      - static_value:/var/html/static/
+      - media_value:/var/html/static/
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  static_value:
+  media_value:
+  db_value:
