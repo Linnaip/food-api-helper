@@ -89,7 +89,10 @@ class RecipesViewSet(viewsets.ModelViewSet):
         return CreateRecipesSerializer
 
     @staticmethod
-    def repeat_method(request, model, serializer_name, pk):
+    def post_delete_method(request, model, serializer_name, pk):
+        """
+        Функция для favorite and shopping_cart.
+        """
         recipe = get_object_or_404(Recipe, id=pk)
         data = {'user': request.user.id, 'recipe': pk}
         context = {'request': request}
@@ -114,7 +117,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(['POST', 'DELETE'], detail=True)
     def favorite(self, request, pk):
-        return self.repeat_method(
+        return self.post_delete_method(
             request=request,
             model=Favorite,
             serializer_name=FavoriteSerializer,
@@ -123,7 +126,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     @action(['POST', 'DELETE'], detail=True)
     def shopping_cart(self, request, pk):
-        return self.repeat_method(
+        return self.post_delete_method(
             request=request,
             model=ShoppingCart,
             serializer_name=ShoppingCartSerializer,

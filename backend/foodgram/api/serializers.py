@@ -156,7 +156,8 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         ing_list = []
-        for ingredient in data:
+        ingredients_data = self.initial_data.get('ingredients')
+        for ingredient in ingredients_data:
             if ingredient['id'] in ing_list:
                 raise ValidationError(
                     'Ингредиенты повторяються.'
@@ -166,7 +167,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
 
     def create_ingredients(self, ingredients, recipe):
         RecipeIngredient.objects.bult_create(
-            RecipeIngredient.objects.create(
+            RecipeIngredient(
                 recipe=recipe,
                 ingredient_id=ingredient.get('id'),
                 quantity=ingredient.get('quantity'),
