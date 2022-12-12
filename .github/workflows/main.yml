@@ -60,7 +60,7 @@ jobs:
           push: true
           context: frontend/ # путь к фронту
           no-cache: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/ # название образа докера
+          tags: ${{ secrets.DOCKER_USERNAME }}/ # репозиторий на docker
 
   deploy:
     runs-on: ubuntu-latest
