@@ -1,14 +1,11 @@
 from django.shortcuts import get_object_or_404
-from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
 from djoser.serializers import UserCreateSerializer, UserSerializer
-
-from recipes.models import (
-    Tag, Ingredient, Recipe,
-    Favorite, ShoppingCart, RecipeIngredient
-)
+from drf_extra_fields.fields import Base64ImageField
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
+from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from users.models import User, Follow
+from users.models import Follow, User
 
 CONSTANT = 6
 
@@ -126,11 +123,10 @@ class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
         )
 
     def create(self, validated_data):
-        create = RecipeIngredient.objects.create(
+        return RecipeIngredient.objects.create(
             ingredients=validated_data.get('id'),
             quantity=validated_data.get('quantity')
         )
-        return create
 
 
 class CreateRecipesSerializer(serializers.ModelSerializer):
@@ -198,9 +194,10 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         rep_data = self.context.get('request')
-        result = RecipesSerializer(instance,
-                                   context={'request': rep_data}).data
-        return result
+        return RecipesSerializer(
+            instance,
+            context={'request': rep_data}
+        ).data
 
 
 class RecipesSerializer(serializers.ModelSerializer):
@@ -229,10 +226,9 @@ class RecipesSerializer(serializers.ModelSerializer):
         """
         if user.is_anonymous:
             return False
-        result = model.objects.filter(
+        return model.objects.filter(
             user=user, recipe_id=pk
         ).exists()
-        return result
 
     def get_is_favorite(self, request, obj):
         """
@@ -278,8 +274,10 @@ class InfoFollowSerializer(UserSerializer):
 
     def get_recipes(self, obj):
         recipes = obj.recipes.all()[:CONSTANT]
-        result = ShortInfoRecipesSerializer(recipes, many=True).data
-        return result
+        return ShortInfoRecipesSerializer(
+            recipes,
+            many=True
+        ).data
 
     def get_recipes_count(self, obj):
         recipes = Recipe.objects.filter(author=obj)
@@ -362,7 +360,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
-        result = ShortInfoRecipesSerializer(
-            instance.recipe, context=context
+        return ShortInfoRecipesSerializer(
+            instance.recipe,
+            context=context
         ).data
-        return result

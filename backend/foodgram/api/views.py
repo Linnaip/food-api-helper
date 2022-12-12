@@ -2,22 +2,20 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from rest_framework import viewsets, status
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from users.models import Follow, User
 
-from users.models import User, Follow
-from recipes.models import (
-    Tag, Ingredient, Recipe,
-    Favorite, ShoppingCart, RecipeIngredient
-)
-from .permissions import IsAdminOrReadOnly, IsAdminAuthorOrReadOnly
-from .serializers import (
-    TagSerializer, IngredientsSerializer, RecipesSerializer,
-    UsersSerializer, FollowSerializer, FavoriteSerializer,
-    CreateRecipesSerializer, ShoppingCartSerializer, InfoFollowSerializer
-)
+from .permissions import IsAdminAuthorOrReadOnly, IsAdminOrReadOnly
+from .serializers import (CreateRecipesSerializer, FavoriteSerializer,
+                          FollowSerializer, InfoFollowSerializer,
+                          IngredientsSerializer, RecipesSerializer,
+                          ShoppingCartSerializer, TagSerializer,
+                          UsersSerializer)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
