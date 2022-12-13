@@ -1,10 +1,11 @@
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from users.models import Follow, User
 
 CONSTANT = 6
@@ -152,12 +153,12 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         ing_list = []
-        ingredients_data = self.initial_data.get('ingredients')
-        for ingredient in ingredients_data:
+        for ingredient in data['ingredients']:
             if ingredient['id'] in ing_list:
-                raise ValidationError(
-                    'Ингредиенты повторяються.'
-                )
+                if len(ing_list) != len(set(ing_list)):
+                    raise ValidationError(
+                        'Ингредиенты повторяются.'
+                    )
             ing_list.append(ing_list)
         return data
 

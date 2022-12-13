@@ -1,14 +1,14 @@
 version: '3.3'
 services:
-  db: База данных посгрес
-    image:  Образ который будет использован
-    volumes: Путь к файлу базы данных
-      -
-    env_file: Путь к env файлу
-      -
+  db:
+    image:  postgres:14.4-alpine
+    volumes:
+      - db_value:/var/lib/postgresql/data/
+    env_file:
+      - ../backend/foodgram/.env
 
-  backend: Часть для файлов бека
-    image: Образ для бека
+  backend:
+    image: foodgram_back:latest
     restart: always
     volumes:
       - static_value:/app/static/
@@ -16,12 +16,11 @@ services:
     depends_on:
       - db
     env_file:
-      - путь к env файлу
+      - ../backend/foodgram/.env
 
 
   frontend:
-    image: ОБраз для фронта
-
+    image: foodgram_front:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
