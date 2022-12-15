@@ -8,7 +8,7 @@ services:
       - ../backend/foodgram/.env
 
   backend:
-    image: foodgram_back:latest
+    image: linnaip/foodgram_project:lastes
     restart: always
     volumes:
       - static_value:/app/static/
@@ -20,7 +20,7 @@ services:
 
 
   frontend:
-    image: foodgram_front:latest
+    image: linnaip/foodgram_project:lastes
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
