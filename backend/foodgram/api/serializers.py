@@ -1,11 +1,10 @@
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
+from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from users.models import Follow, User
 
 CONSTANT = 6
