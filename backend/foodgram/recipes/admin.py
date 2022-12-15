@@ -9,7 +9,7 @@ class TagsAdmin(admin.ModelAdmin):
 
 
 class IngredientsAdmin(admin.ModelAdmin):
-    list_display = ('name', 'measure_unit')
+    list_display = ('name', 'measurement_unit')
 
 
 class RecipeIngredientsAdmin(admin.ModelAdmin):
