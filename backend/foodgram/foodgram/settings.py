@@ -11,6 +11,8 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = False
 
 ALLOWED_HOSTS = [
+    'projectlinnaip.ddns.net',
+    '158.160.52.84',
     'localhost',
     '127.0.0.1',
 ]
@@ -62,14 +64,12 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'sqlite3'
-        # 'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.sqlite3'),
-        # 'NAME': os.getenv('DB_NAME', default='sqlite3'),
-        # 'USER': os.getenv('POSTGRES_USER'),
-        # 'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
-        # 'HOST': os.getenv('DB_HOST'),
-        # 'PORT': os.getenv('DB_POST')
+        'ENGINE': os.getenv('DB_ENGINE', default='django.db.backends.sqlite3'),
+        'NAME': os.getenv('DB_NAME', default='sqlite3'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_POST')
     }
 }
 
