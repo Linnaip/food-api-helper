@@ -12,7 +12,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     'projectlinnaip.ddns.net',
-    '158.160.52.84',
+    '51.250.13.248',
     'localhost',
     '127.0.0.1',
 ]
