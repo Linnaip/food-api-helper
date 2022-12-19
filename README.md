@@ -32,7 +32,7 @@ sudo docker-compose exec backend python manage.py collectstatic --no-input
 ```
 ### Ссылка на развернутый проект:
 ```
-http://projectlinnaip.ddns.net
+http://51.250.13.248/
 ```
 Доступные адреса проекта:
 ```
