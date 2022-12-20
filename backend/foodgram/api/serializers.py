@@ -14,6 +14,7 @@ class CreateUsersSerializer(UserCreateSerializer):
     """
     Для создания юзера.
     """
+
     class Meta:
         model = User
         fields = (
@@ -57,7 +58,6 @@ class UsersSerializer(UserSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Tag
         fields = (
@@ -70,6 +70,7 @@ class IngredientsSerializer(serializers.ModelSerializer):
     """
     Сериализатор для вывода ингредиентов.
     """
+
     class Meta:
         model = Ingredient
         fields = (
@@ -101,6 +102,7 @@ class ShortInfoRecipesSerializer(serializers.ModelSerializer):
     """
     Вывод краткой информации о рецепте
     """
+
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
@@ -110,10 +112,7 @@ class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
     """
     Для создания ингредиетов.
     """
-    id = serializers.PrimaryKeyRelatedField(
-        queryset=Ingredient.objects.all(),
-        source='ingredients'
-    )
+    id = serializers.IntegerField(write_only=True)
 
     class Meta:
         model = RecipeIngredient
@@ -140,7 +139,6 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
     )
     ingredients = CreateIngredientRecipeSerializer(many=True)
     author = UsersSerializer(read_only=True)
-    name = serializers.CharField(max_length=200)
 
     class Meta:
         model = Recipe
@@ -150,45 +148,31 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             'cooking_time', 'ingredients'
         )
 
-    def validate(self, data):
-        ing_list = []
-        for ingredient in data['ingredients']:
-            if ingredient['id'] in ing_list:
-                raise ValidationError(
-                    'Ингредиенты повторяются.'
-                )
-            ing_list.append(ing_list)
-        return data
-
     def create_ingredients(self, ingredients, recipe):
-        RecipeIngredient.objects.bult_create(
+        RecipeIngredient.objects.bulk_create([
             RecipeIngredient(
                 recipe=recipe,
-                ingredient_id=ingredient.get('id'),
+                ingredients=Ingredient.objects.get(id=ingredient['id']),
                 quantity=ingredient.get('quantity'),
-            ) for ingredient in ingredients
+            ) for ingredient in ingredients]
         )
 
     def create(self, validated_data):
-        author_data = self.context.get('request').user
+        request = self.context.get('request')
         ingredients_data = validated_data.pop('ingredients')
         tag_data = validated_data.pop('tag')
-        image_data = validated_data.pop('image')
         recipe = Recipe.objects.create(
-            **validated_data,
-            image=image_data,
-            author=author_data
+            author=request.user,
+            ** validated_data,
         )
         recipe.tag.set(tag_data)
-        self.create_ingredients(ingredients_data, recipe)
+        self.create_ingredients(ingredients=ingredients_data, recipe=recipe)
         return recipe
 
     def update(self, recipe, validated_data):
         ingredients = validated_data.pop("ingredients")
-        tags = validated_data.pop("tag")
         RecipeIngredient.objects.filter(recipe=recipe).delete()
         self.create_ingredients(ingredients, recipe)
-        recipe.tags.set(tags)
         return super().update(recipe, validated_data)
 
     def to_representation(self, instance):
@@ -229,20 +213,22 @@ class RecipesSerializer(serializers.ModelSerializer):
             user=user, recipe_id=pk
         ).exists()
 
-    def get_is_favorite(self, request, obj):
+    def get_is_favorite(self, obj):
         """
         Для проверки избранного.
         """
+        request = self.context.get('request')
         return self.get_is(
             user=request.user,
             pk=obj.id,
             model=Favorite
         )
 
-    def get_is_in_shopping_cart(self, request, obj):
+    def get_is_in_shopping_cart(self, obj):
         """
         Для проверки листа покупок.
         """
+        request = self.context.get('request')
         return self.get_is(
             model=ShoppingCart,
             user=request.user,
@@ -325,6 +311,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
     """
     Сериализатор для избранного.
     """
+
     class Meta:
         model = Favorite
         fields = ('recipe', 'user')
@@ -352,6 +339,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
     """
     Сериализатор для листа поукпок.
     """
+
     class Meta:
         fields = ['recipe', 'user']
         model = ShoppingCart
