@@ -140,7 +140,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
             ).values(
                 "ingredients__name",
                 "ingredients__measurement_unit",
-            ).annotate(total_quantity=Sum("quantity"))
+            ).annotate(total_quantity=Sum("amount"))
         )
         for item in cart:
             name = item["ingredients__name"]

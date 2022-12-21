@@ -94,7 +94,7 @@ class IngredientInRecipesSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = (
             'id', 'name',
-            'measurement_unit', 'quantity',
+            'measurement_unit', 'amount',
         )
 
 
@@ -118,13 +118,13 @@ class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
         model = RecipeIngredient
         fields = (
             'id',
-            'quantity',
+            'amount',
         )
 
     def create(self, validated_data):
         return RecipeIngredient.objects.create(
             ingredients=validated_data.get('id'),
-            quantity=validated_data.get('quantity')
+            amount=validated_data.get('amount')
         )
 
 
@@ -133,7 +133,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
     Для создания рецептов.
     """
     image = Base64ImageField(use_url=True, max_length=None)
-    tag = serializers.PrimaryKeyRelatedField(
+    tags = serializers.PrimaryKeyRelatedField(
         many=True,
         queryset=Tag.objects.all()
     )
@@ -143,7 +143,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'id', 'author', 'tag',
+            'id', 'author', 'tags',
             'image', 'name', 'text',
             'cooking_time', 'ingredients'
         )
@@ -153,19 +153,19 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             RecipeIngredient(
                 recipe=recipe,
                 ingredients=Ingredient.objects.get(id=ingredient['id']),
-                quantity=ingredient.get('quantity'),
+                amount=ingredient.get('amount'),
             ) for ingredient in ingredients]
         )
 
     def create(self, validated_data):
         request = self.context.get('request')
         ingredients_data = validated_data.pop('ingredients')
-        tag_data = validated_data.pop('tag')
+        tag_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(
             author=request.user,
-            ** validated_data,
+            **validated_data,
         )
-        recipe.tag.set(tag_data)
+        recipe.tags.set(tag_data)
         self.create_ingredients(ingredients=ingredients_data, recipe=recipe)
         return recipe
 
@@ -187,9 +187,8 @@ class RecipesSerializer(serializers.ModelSerializer):
     """
     Для просмотра полной информации о рецептах.
     """
-    tag = TagSerializer(read_only=True, many=True)
-    ingredients = IngredientsSerializer(read_only=True, many=True,
-                                        source='ingredients_recipe')
+    tags = TagSerializer(read_only=True, many=True)
+    ingredients = IngredientsSerializer(read_only=True, many=True)
     author = UsersSerializer(read_only=True)
     is_favorite = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
@@ -197,7 +196,7 @@ class RecipesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'ingredients', 'tag',
+            'tags', 'ingredients',
             'image', 'name',
             'text', 'cooking_time', 'author',
             'is_favorite', 'is_in_shopping_cart'

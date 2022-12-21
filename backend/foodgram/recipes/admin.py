@@ -13,7 +13,7 @@ class IngredientsAdmin(admin.ModelAdmin):
 
 
 class RecipeIngredientsAdmin(admin.ModelAdmin):
-    list_display = ('ingredients', 'recipe', 'quantity')
+    list_display = ('ingredients', 'recipe', 'amount')
 
 
 class RecipeAdmin(admin.ModelAdmin):

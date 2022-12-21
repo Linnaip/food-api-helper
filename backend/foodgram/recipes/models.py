@@ -64,7 +64,7 @@ class Recipe(models.Model):
         verbose_name='Ингредиенты',
         related_name='recipes'
     )
-    tag = models.ManyToManyField(
+    tags = models.ManyToManyField(
         Tag,
         verbose_name='Тег'
     )
@@ -119,7 +119,7 @@ class RecipeIngredient(models.Model):
         related_name='recipe_ingredients',
         verbose_name='Рецепт'
     )
-    quantity = models.IntegerField(
+    amount = models.IntegerField(
         default=1,
         validators=[
             MinValueValidator(1, 'Минимальное количество 1')
@@ -141,7 +141,7 @@ class RecipeIngredient(models.Model):
         )
 
     def __str__(self):
-        return f'{self.recipe}: {self.ingredients} – {self.quantity}'
+        return f'{self.recipe}: {self.ingredients} – {self.amount}'
 
 
 class ShoppingCart(models.Model):
