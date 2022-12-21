@@ -51,7 +51,6 @@ class CustomUserViewSet(UserViewSet):
 
     @action(['POST', 'DELETE'], detail=True)
     def subscribe(self, request, id):
-        author = get_object_or_404(User, id=id)
         data = {'user': request.user.pk, 'author': id}
         if request.method == 'POST':
             serializer = FollowSerializer(
@@ -64,6 +63,7 @@ class CustomUserViewSet(UserViewSet):
                 serializer.data, status=status.HTTP_201_CREATED
             )
         elif request.method == 'DELETE':
+            author = get_object_or_404(User, id=id)
             subscription = get_object_or_404(
                 Follow,
                 author=author,
