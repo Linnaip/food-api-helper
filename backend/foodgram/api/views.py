@@ -1,6 +1,7 @@
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
@@ -10,12 +11,14 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from users.models import Follow, User
 
+from .pagintation import CustomPagination
 from .permissions import IsAdminAuthorOrReadOnly, IsAdminOrReadOnly
 from .serializers import (CreateRecipesSerializer, FavoriteSerializer,
                           FollowSerializer, InfoFollowSerializer,
                           IngredientsSerializer, RecipesSerializer,
                           ShoppingCartSerializer, TagSerializer,
                           UsersSerializer)
+from .filters import IngredientFilter
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -30,6 +33,8 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientsSerializer
     pagination_class = None
     permission_classes = (IsAdminOrReadOnly,)
+    filter_backend = (DjangoFilterBackend,)
+    filterset_class = IngredientFilter
 
 
 class CustomUserViewSet(UserViewSet):
@@ -50,11 +55,15 @@ class CustomUserViewSet(UserViewSet):
         return self.get_paginated_response(serializer.data)
 
     @action(['POST', 'DELETE'], detail=True)
-    def subscribe(self, request, id):
-        data = {'user': request.user.pk, 'author': id}
+    def subscribe(self, request, **kwargs):
+        user = request.user
+        author_id = self.kwargs.get('id')
+        author = get_object_or_404(User, id=author_id)
+
         if request.method == 'POST':
             serializer = FollowSerializer(
-                data=data,
+                author,
+                data=request.data,
                 context={'request': request}
             )
             serializer.is_valid(raise_exception=True)
@@ -63,11 +72,10 @@ class CustomUserViewSet(UserViewSet):
                 serializer.data, status=status.HTTP_201_CREATED
             )
         elif request.method == 'DELETE':
-            author = get_object_or_404(User, id=id)
             subscription = get_object_or_404(
                 Follow,
                 author=author,
-                user=request.user.id
+                user=user
             )
             subscription.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
@@ -80,6 +88,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipesSerializer
     permission_classes = (IsAdminAuthorOrReadOnly,)
+    pagination_class = CustomPagination
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'retrieve':

@@ -18,7 +18,7 @@ class RecipeIngredientsAdmin(admin.ModelAdmin):
 
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
-        'name', 'author'
+        'id', 'name', 'author'
     )
 
 

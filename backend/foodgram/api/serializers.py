@@ -148,15 +148,17 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             'cooking_time', 'ingredients'
         )
 
-    def validate(self, data):
-        ing_list = []
-        for ingredient in data['ingredients']:
-            if ingredient['id'] in ing_list:
-                raise ValidationError(
-                    'Ингредиенты повторяются.'
-                )
-            ing_list.append(ing_list)
-        return data
+    # def validate_ingredients(self, data):
+    #     ing_list = []
+    #     for ingredient in data['ingredients']:
+    #         if ingredient['id'] in ing_list:
+    #             raise ValidationError(
+    #                 {
+    #                     'ingredients': 'Ингридиенты не могут повторяться!'
+    #                 }
+    #             )
+    #         ing_list.append(ing_list)
+    #     return data
 
     def create_ingredients(self, ingredients, recipe):
         RecipeIngredient.objects.bulk_create([
@@ -239,9 +241,9 @@ class RecipesSerializer(serializers.ModelSerializer):
         """
         request = self.context.get('request')
         return self.get_is(
-            model=ShoppingCart,
             user=request.user,
-            pk=obj.id
+            pk=obj.id,
+            model=ShoppingCart
         )
 
 
@@ -287,8 +289,8 @@ class FollowSerializer(UserSerializer):
     """
     Подписки.
     """
-    user = serializers.IntegerField(source='user.id')
-    author = serializers.IntegerField(source='author.id')
+    recipes_count = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
 
     class Meta:
         model = Follow
@@ -301,11 +303,15 @@ class FollowSerializer(UserSerializer):
             )
         return following
 
-    def create(self, validated_data):
-        author = validated_data.get("author")
-        author = get_object_or_404(User, pk=author.get("id"))
-        user = validated_data.get("user")
-        return Follow.objects.create(user=user, author=author)
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
+
+    def get_recipes(self, obj):
+        recipes = obj.recipes.all()
+        serializer = ShortInfoRecipesSerializer(
+            recipes, many=True, read_only=True
+        )
+        return serializer.data
 
     def to_representation(self, instance):
         return InfoFollowSerializer(
