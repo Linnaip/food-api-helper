@@ -1,10 +1,8 @@
-from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 from users.models import Follow, User
 
 CONSTANT = 6
@@ -174,18 +172,20 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
         ingredients_data = validated_data.pop('ingredients')
         tag_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(
-            author=request.user,
             **validated_data,
+            author=request.user
         )
         recipe.tags.set(tag_data)
         self.create_ingredients(ingredients=ingredients_data, recipe=recipe)
         return recipe
 
-    def update(self, recipe, validated_data):
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags')
         ingredients = validated_data.pop("ingredients")
-        RecipeIngredient.objects.filter(recipe=recipe).delete()
-        self.create_ingredients(ingredients, recipe)
-        return super().update(recipe, validated_data)
+        RecipeIngredient.objects.filter(recipe=instance).delete()
+        instance.tags.set(tags)
+        self.create_ingredients(ingredients, instance)
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         rep_data = self.context.get('request')
@@ -199,8 +199,10 @@ class RecipesSerializer(serializers.ModelSerializer):
     """
     Для просмотра полной информации о рецептах.
     """
+    id = serializers.IntegerField()
+    image = Base64ImageField()
     tags = TagSerializer(read_only=True, many=True)
-    ingredients = IngredientsSerializer(read_only=True, many=True)
+    ingredients = IngredientsSerializer(required=True, many=True)
     author = UsersSerializer(read_only=True)
     is_favorite = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
@@ -208,20 +210,20 @@ class RecipesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = (
-            'tags', 'ingredients',
+            'id', 'tags', 'ingredients',
             'image', 'name',
             'text', 'cooking_time', 'author',
             'is_favorite', 'is_in_shopping_cart'
         )
 
-    def get_is(self, model, user, pk):
+    def get_is(self, model, user, obj):
         """
         Функция для favorite and shopping_cart.
         """
         if user.is_anonymous:
             return False
         return model.objects.filter(
-            user=user, recipe_id=pk
+            recipe=obj
         ).exists()
 
     def get_is_favorite(self, obj):
@@ -231,7 +233,7 @@ class RecipesSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return self.get_is(
             user=request.user,
-            pk=obj.id,
+            obj=obj,
             model=Favorite
         )
 
@@ -242,7 +244,7 @@ class RecipesSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         return self.get_is(
             user=request.user,
-            pk=obj.id,
+            obj=obj,
             model=ShoppingCart
         )
 
