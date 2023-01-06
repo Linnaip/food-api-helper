@@ -5,10 +5,10 @@ services:
     volumes:
       - db_value:/var/lib/postgresql/data/
     env_file:
-      - ../backend/foodgram/.env
+      - ./.env
 
   backend:
-    image: food228:latest
+    image: foodgram_back:latest
     restart: always
     volumes:
       - static_value:/app/static/
@@ -16,7 +16,7 @@ services:
     depends_on:
       - db
     env_file:
-      - ../backend/foodgram/.env
+      - ./.env
 
 
   frontend:

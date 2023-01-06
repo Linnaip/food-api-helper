@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from users.models import Follow, User
 
+from .filters import IngredientFilter
 from .pagintation import CustomPagination
 from .permissions import IsAdminAuthorOrReadOnly, IsAdminOrReadOnly
 from .serializers import (CreateRecipesSerializer, FavoriteSerializer,
@@ -18,7 +19,6 @@ from .serializers import (CreateRecipesSerializer, FavoriteSerializer,
                           IngredientsSerializer, RecipesSerializer,
                           ShoppingCartSerializer, TagSerializer,
                           UsersSerializer)
-from .filters import IngredientFilter
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
