@@ -290,7 +290,9 @@ class FollowSerializer(UsersSerializer):
         queryset = object.recipes.all()
         if recipe_limit:
             queryset = queryset[:int(recipe_limit)]
-        return ShortInfoRecipesSerializer(queryset, context=context, many=True).data
+        return ShortInfoRecipesSerializer(
+            queryset, context=context, many=True
+        ).data
 
     def get_recipes_count(self, object):
         return object.recipes.count()
