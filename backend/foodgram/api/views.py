@@ -15,9 +15,9 @@ from .filters import IngredientFilter, RecipeFilter
 from .pagintation import CustomPagination
 from .permissions import IsAdminAuthorOrReadOnly, IsAdminOrReadOnly
 from .serializers import (CreateRecipesSerializer, FavoriteSerializer,
-                          FollowSerializer, IngredientsSerializer, RecipesSerializer,
-                          ShoppingCartSerializer, TagSerializer,
-                          UsersSerializer)
+                          FollowSerializer, IngredientsSerializer,
+                          RecipesSerializer, ShoppingCartSerializer,
+                          TagSerializer, UsersSerializer)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -70,7 +70,7 @@ class CustomUserViewSet(UserViewSet):
             serializer = FollowSerializer(author, context={'request': request})
             Follow.objects.create(user=user, author=author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        if request.method == 'DELETE':
+        elif request.method == 'DELETE':
             if subscription.exists():
                 subscription.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
