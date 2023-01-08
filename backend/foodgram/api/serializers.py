@@ -305,6 +305,14 @@ class FavoriteSerializer(serializers.ModelSerializer):
         model = Favorite
         fields = ('recipe', 'user')
 
+    def validate(self, data):
+        user, recipe = data.get('user'), data.get('recipe')
+        if self.Meta.model.objects.filter(user=user, recipe=recipe).exists():
+            raise ValidationError(
+                {'error': 'Этот рецепт уже добавлен'}
+            )
+        return data
+
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
@@ -319,13 +327,20 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
     """
 
     class Meta:
-        fields = ['recipe', 'user']
         model = ShoppingCart
+        fields = ('recipe', 'user')
+
+    def validate(self, data):
+        user, recipe = data.get('user'), data.get('recipe')
+        if self.Meta.model.objects.filter(user=user, recipe=recipe).exists():
+            raise ValidationError(
+                {'error': 'Этот рецепт уже добавлен'}
+            )
+        return data
 
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
         return ShortInfoRecipesSerializer(
-            instance.recipe,
-            context=context
+            instance.recipe, context=context
         ).data

@@ -30,10 +30,10 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
-    pagination_class = None
-    permission_classes = (IsAdminOrReadOnly,)
     filter_backend = (DjangoFilterBackend,)
     filterset_class = IngredientFilter
+    pagination_class = None
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class CustomUserViewSet(UserViewSet):
@@ -90,9 +90,9 @@ class RecipesViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
 
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'retrieve':
-            return RecipesSerializer
-        return CreateRecipesSerializer
+        if self.request.method in ['PUT', 'POST', 'PATCH']:
+            return CreateRecipesSerializer
+        return RecipesSerializer
 
     @staticmethod
     def post_delete_method(request, model, serializer_name, pk):
