@@ -8,7 +8,7 @@ services:
       - ./.env
 
   backend:
-    image: foodgram_back:latest
+    image: food228:latest
     restart: always
     volumes:
       - static_value:/app/static/

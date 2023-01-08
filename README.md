@@ -28,11 +28,11 @@ sudo docker-compose exec backend python manage.py collectstatic --no-input
 ```
 Загрузите в бд ингредиенты командой ниже.
 ```
-
+sudo docker-compose exec backend python manage.py loaddata data/ingredients
 ```
 ### Ссылка на развернутый проект:
 ```
-http://51.250.13.248/
+http://http://158.160.43.9//
 ```
 Доступные адреса проекта:
 ```
