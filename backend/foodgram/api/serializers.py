@@ -1,4 +1,3 @@
-from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
@@ -148,26 +147,6 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             'cooking_time', 'ingredients'
         )
 
-    def validate_ingredients(self, value):
-        ingredients = value
-        if not ingredients:
-            raise ValidationError({
-                'ingredients': 'Нужен хотя бы один ингредиент!'
-            })
-        ingredients_list = []
-        for item in ingredients:
-            ingredient = get_object_or_404(Ingredient, id=item['id'])
-            if ingredient in ingredients_list:
-                raise ValidationError({
-                    'ingredients': 'Ингридиенты не могут повторяться!'
-                })
-            if int(item['amount']) <= 0:
-                raise ValidationError({
-                    'amount': 'Количество ингредиента должно быть больше 0!'
-                })
-            ingredients_list.append(ingredient)
-        return value
-
     def create_ingredients(self, ingredients, recipe):
         RecipeIngredient.objects.bulk_create([
             RecipeIngredient(
@@ -230,7 +209,7 @@ class RecipesSerializer(serializers.ModelSerializer):
     tags = TagSerializer(read_only=True, many=True)
     ingredients = IngredientsSerializer(required=True, many=True)
     author = UsersSerializer(read_only=True)
-    is_favorite = serializers.SerializerMethodField(read_only=True)
+    is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -239,10 +218,11 @@ class RecipesSerializer(serializers.ModelSerializer):
             'id', 'tags', 'ingredients',
             'image', 'name',
             'text', 'cooking_time', 'author',
-            'is_favorite', 'is_in_shopping_cart'
+            'is_favorited', 'is_in_shopping_cart'
         )
 
-    def get_is(self, model, user, obj):
+    @staticmethod
+    def get_is(model, user, obj):
         """
         Функция для favorite and shopping_cart.
         """
@@ -252,7 +232,7 @@ class RecipesSerializer(serializers.ModelSerializer):
             recipe=obj
         ).exists()
 
-    def get_is_favorite(self, obj):
+    def get_is_favorited(self, obj):
         """
         Для проверки избранного.
         """

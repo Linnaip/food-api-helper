@@ -32,7 +32,7 @@ sudo docker-compose exec backend python manage.py loaddata data/ingredients
 ```
 ### Ссылка на развернутый проект:
 ```
-http://http://158.160.43.9//
+http://http://51.250.72.4//
 ```
 Доступные адреса проекта:
 ```

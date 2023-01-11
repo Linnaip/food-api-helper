@@ -151,6 +151,7 @@ class ShoppingCart(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name='is_shopping_cart'
     )
     user = models.ForeignKey(
         User,
