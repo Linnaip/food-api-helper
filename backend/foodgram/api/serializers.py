@@ -101,10 +101,11 @@ class ShortInfoRecipesSerializer(serializers.ModelSerializer):
     """
     Вывод краткой информации о рецепте
     """
+    tags = TagSerializer(read_only=True, many=True)
 
     class Meta:
         model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
+        fields = ('id', 'tags', 'name', 'image', 'cooking_time')
 
 
 class CreateIngredientRecipeSerializer(serializers.ModelSerializer):
@@ -187,6 +188,20 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop("ingredients")
+        unique_ingredients = set()
+
+        for ingredient in ingredients:
+            if ingredient.get('amount') <= 0:
+                raise ValidationError(
+                    'Количество ингредиентов должно быть больше нуля'
+                )
+            if ingredient['id'] in unique_ingredients:
+                raise ValidationError(
+                    'Ингредиенты в рецепте не должны повторяться'
+                )
+            unique_ingredients.add(ingredient['id'])
+        instance.tags.clear()
+        instance.ingredients.clear()
         RecipeIngredient.objects.filter(recipe=instance).delete()
         instance.tags.set(tags)
         self.create_ingredients(ingredients, instance)
