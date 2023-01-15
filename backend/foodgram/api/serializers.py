@@ -91,10 +91,10 @@ class IngredientInRecipesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RecipeIngredient
-        fields = (
+        fields = [
             'id', 'name',
-            'measurement_unit', 'amount',
-        )
+            'measurement_unit', 'amount'
+        ]
 
 
 class ShortInfoRecipesSerializer(serializers.ModelSerializer):
@@ -222,7 +222,7 @@ class RecipesSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     image = Base64ImageField()
     tags = TagSerializer(read_only=True, many=True)
-    ingredients = IngredientsSerializer(required=True, many=True)
+    ingredients = IngredientInRecipesSerializer(many=True, source='recipe_ingredients')
     author = UsersSerializer(read_only=True)
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
