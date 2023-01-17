@@ -148,17 +148,8 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             'cooking_time', 'ingredients'
         )
 
-    def create_ingredients(self, ingredients, recipe):
-        RecipeIngredient.objects.bulk_create([
-            RecipeIngredient(
-                recipe=recipe,
-                ingredients=Ingredient.objects.get(id=ingredient['id']),
-                amount=ingredient.get('amount'),
-            ) for ingredient in ingredients]
-        )
-
-    def create(self, validated_data):
-        ingredients_data = validated_data.pop('ingredients')
+    def validate(self, data):
+        ingredients_data = data['ingredients']
         if not ingredients_data:
             raise ValidationError({
                 'ingredients': 'Нужен хотя бы один ингредиент!'
@@ -174,7 +165,18 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
                     'Ингредиенты в рецепте не должны повторяться'
                 )
             unique_ingredients.add(ingredient['id'])
+        return data
+    def create_ingredients(self, ingredients, recipe):
+        RecipeIngredient.objects.bulk_create([
+            RecipeIngredient(
+                recipe=recipe,
+                ingredients=Ingredient.objects.get(id=ingredient['id']),
+                amount=ingredient.get('amount'),
+            ) for ingredient in ingredients]
+        )
 
+    def create(self, validated_data):
+        ingredients_data = validated_data.pop('ingredients')
         request = self.context.get('request')
         tag_data = validated_data.pop('tags')
         recipe = Recipe.objects.create(
@@ -188,18 +190,7 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop("ingredients")
-        unique_ingredients = set()
 
-        for ingredient in ingredients:
-            if ingredient.get('amount') <= 0:
-                raise ValidationError(
-                    'Количество ингредиентов должно быть больше нуля'
-                )
-            if ingredient['id'] in unique_ingredients:
-                raise ValidationError(
-                    'Ингредиенты в рецепте не должны повторяться'
-                )
-            unique_ingredients.add(ingredient['id'])
         instance.tags.clear()
         instance.ingredients.clear()
         RecipeIngredient.objects.filter(recipe=instance).delete()
